@@ -1,3 +1,132 @@
-Project Description
-2048 is played on a 4 × 4 grid, with numbered tiles that slide smoothly when a player moves them using the four arrow keys. Every turn, a new tile will randomly appear in an empty spot on the board with a value of either 2 or 4. Tiles slide as far as possible in the chosen direction until they are stopped by either another tile or the edge of the grid. If two tiles of the same number collide while moving, they will merge into a tile with the total value of the two tiles that collided. The resulting tile cannot merge with another tile again in the same move. The game is won when a tile with a value of 2048 appears on the board, hence the name of the game. After reaching the 2048 tile, players can continue to play (beyond the 2048 tile) to reach higher scores. When the player has no legal moves (there are no empty spaces and no adjacent tiles with the same value), the game ends.
-
+M=()
+L=()
+align(){
+for i in {1..3}
+{
+for j in {1..3}
+{
+[ "${L[$j]}" != "" ] && [ "${L[$j-1]}" == "" ] && L[$j-1]=${L[$j]} && L[$j]=""
+}
+}
+}
+sum(){
+for i in {1..3}
+{
+[ "${L[$i]}" == "${L[$i-1]}" ] && [ "${L[$i]}" != "" ] && L[$i-1]=$(( ${L[$i]} * 2 )) && L[$i]=""
+}
+}
+sumup(){
+align
+sum
+align
+}
+left(){
+for n in 0 4 8 12
+{
+L=( ${M[$n]} ${M[$n+1]} ${M[$n+2]} ${M[$n+3]} )
+sumup
+M[$n]=${L[0]}
+M[$n+1]=${L[1]}
+M[$n+2]=${L[2]}
+M[$n+3]=${L[3]}
+}
+}
+right(){
+for n in 0 4 8 12
+{
+L=( ${M[$n+3]} ${M[$n+2]} ${M[$n+1]} ${M[$n]} )
+sumup
+M[$n+3]=${L[0]}
+M[$n+2]=${L[1]}
+M[$n+1]=${L[2]}
+M[$n]=${L[3]}
+}
+}
+up(){
+for n in 0 1 2 3
+{
+L=( ${M[$n]} ${M[$n+4]} ${M[$n+8]} ${M[$n+12]} )
+sumup
+M[$n]=${L[0]}
+M[$n+4]=${L[1]}
+M[$n+8]=${L[2]}
+M[$n+12]=${L[3]}
+}
+}
+down(){
+for n in 0 1 2 3
+{
+L=( ${M[$n+12]} ${M[$n+8]} ${M[$n+4]} ${M[$n]} )
+sumup
+M[$n+12]=${L[0]}
+M[$n+8]=${L[1]}
+M[$n+4]=${L[2]}
+M[$n]=${L[3]}
+}
+}
+board(){
+D="---------------------"
+S="%s\n|%4s|%4s|%4s|%4s|\n"
+clear
+p=printf
+echo 2048.bash
+echo
+$p $S $D ${M[0]:-"."} ${M[1]:-"."} ${M[2]:-"."} ${M[3]:-"."}
+$p $S $D ${M[4]:-"."} ${M[5]:-"."} ${M[6]:-"."} ${M[7]:-"."}
+$p $S $D ${M[8]:-"."} ${M[9]:-"."} ${M[10]:-"."} ${M[11]:-"."}
+$p $S $D ${M[12]:-"."} ${M[13]:-"."} ${M[14]:-"."} ${M[15]:-"."}
+echo $D
+echo
+echo "Moves: w=up,a=left,s=down,d=right, Quit: q"
+}
+a2(){
+n=$(($RANDOM % 16))
+while [ "${M[$n]}" != "" ]
+do
+n=$(($RANDOM % 16))
+done
+M[$n]=2
+}
+setup(){
+for i in {0..15}; do M[$i]=""; done
+a2
+a2
+board
+}
+check(){
+F=1
+for i in {0..15}
+{
+[ "${M[$i]}" == "" ] && F=0
+}
+return $F
+}
+game.over(){
+while [ "$REPLY" != "y" ] && [ "$REPLY" != "n" ]
+do
+read -n 1 -p "GAME OVER! Play again? (y/n)"
+done
+case $REPLY in
+y) setup; return 1 ;;
+n) exit ;;
+esac
+}
+RANDOM=12345
+setup
+while :
+do
+read -n 1 -s
+case $REPLY in
+w) up ;;
+a) left ;;
+s) down ;;
+d) right ;;
+q) exit ;;
+*) continue ;;
+esac
+check || game.over || continue
+board
+sleep 1
+a2
+board
+done
